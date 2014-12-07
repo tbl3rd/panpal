@@ -79,8 +79,8 @@
   pairs
   (letfn [(tails [head] (trie-match trie (string/reverse head)))
           (heads [tail] (map string/reverse (trie-match eirt tail)))
-          (headr [word] (map (fn [w h] [w h]) (repeat word) (heads word)))
-          (tailr [word] (map (fn [w t] [w t]) (repeat word) (tails word)))
+          (headr [word] (map vector (repeat word) (heads word)))
+          (tailr [word] (map vector (repeat word) (tails word)))
           (flips [word] (lazy-cat (headr word) (tailr word)))
           (twin? [[left right]] (= (count left) (count right)))]
     (filter palindrome?
