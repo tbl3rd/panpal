@@ -58,7 +58,7 @@
                 \s {:$ "bats"},
                 \c {\h {:$ "batch"}}}}}}
 
-         "What does pp/pprint (Clojure's pretty-printer) do with this?")
+         "Quickly find 'bats' to pair with 'tab'.")
 
 (defn trie-seq
   "The sequence of all words in trie."
@@ -69,28 +69,14 @@
   "Sequence of words matching w in trie."
   (keep :$ (tree-seq map? vals (get-in trie w))))
 
-(def ^{:doc "The trie of all words in the dictionary reversed."}
-  eirt (reduce trie-add {} (map string/reverse words)))
-
-(comment "What is eirt?"
-
-         (let [words ["bat" "bats" "bet" "batch" "banana" "band"]]
-           (reduce trie-add {} (map string/reverse words)))
-
-         {\d {\n {\a {\b {:$ "dnab"}}}},
-          \a {\n {\a {\n {\a {\b {:$ "ananab"}}}}}},
-          \h {\c {\t {\a {\b {:$ "hctab"}}}}},
-          \s {\t {\a {\b {:$ "stab"}}}},
-          \t {\e {\b {:$ "teb"}},
-              \a {\b {:$ "tab"}}}}
-
-         "Quickly find 'tab' and 'stab' as palindromic pairs of 'bat'.")
+(def ^{:doc "The trie of all words in the dictionary."}
+  trie (reduce trie-add {} words))
 
 
 (def ^{:doc "Two-word palindromes in words."}
   pairs
-  (letfn [(heads [tail] (map string/reverse (trie-match eirt tail)))
-          (flips [word] (map vector (repeat word) (heads word)))
+  (letfn [(heads [tail] (trie-match trie (string/reverse tail)))
+          (flips [word] (map vector (heads word) (repeat word)))
           (twin? [[left right]] (= (count left) (count right)))]
     (filter palindrome?
             (filter (complement twin?) (mapcat flips words)))))
@@ -169,11 +155,11 @@
     (catch Throwable x
       (println "Oops:" x))))
 
-{:letters 87,
+{:letters 85,
  :words 22,
  :panpal
  ["mac" "brag" "yah" "fled" "snivel" "tinker" "stow"
-  "spaz" "six" "jar" "piu" "quip" "raj" "xis" "zaps"
+  "spaz" "six" "jar" "suq" "us" "raj" "xis" "zaps"
   "wots" "reknit" "levins" "delf" "hay" "garb" "cam"]}
 
 ;; (time (-main))
