@@ -79,9 +79,12 @@
   pairs
   (letfn [(tails [head] (trie-match trie (string/reverse head)))
           (heads [tail] (map string/reverse (trie-match eirt tail)))
-          (flips [word head tail] [[word head] [word tail]])
-          (grunt [w] (mapcat flips (repeat w) (heads w) (tails w)))]
-    (filter palindrome? (mapcat grunt words))))
+          (headr [word] (map (fn [w h] [w h]) (repeat word) (heads word)))
+          (tailr [word] (map (fn [w t] [w t]) (repeat word) (tails word)))
+          (flips [word] (lazy-cat (headr word) (tailr word)))
+          (twin? [[left right]] (= (count left) (count right)))]
+    (filter palindrome?
+            (filter (complement twin?) (mapcat flips words)))))
 
 (comment "Now there are twins that are their own palindromes reversed,"
          "and there are also pairs which are all 2-word palindromes.")
@@ -89,9 +92,9 @@
 (defn golf-score-2-word-palindrome
   "Golf score 2-word palindromes on their letter coverage."
   [pal]
-  (let [ls (reduce str pal)
+  (let [ls   (reduce str pal)
         lset (set ls)
-        n (count ls)]
+        n    (count ls)]
     {:pal     pal
      :letters lset
      :count   n
@@ -157,11 +160,11 @@
     (catch Throwable x
       (println "Oops:" x))))
 
-{:letters 91,
- :words 24,
+{:letters 87,
+ :words 22,
  :panpal
- ["tug" "mac" "brag" "yah" "fled" "snivel" "tinker" "stow"
-  "spaz" "six" "jar" "ta" "qat" "raj" "xis" "zaps"
-  "wots" "reknit" "levins" "delf" "hay" "garb" "cam" "gut"]}
+ ["mac" "brag" "yah" "fled" "snivel" "tinker" "stow"
+  "spaz" "six" "jar" "piu" "quip" "raj" "xis" "zaps"
+  "wots" "reknit" "levins" "delf" "hay" "garb" "cam"]}
 
 ;; (time (-main))
