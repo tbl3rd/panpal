@@ -44,6 +44,22 @@
   [trie w]
   (assoc-in trie w (merge (get-in trie w) {:$ w})))
 
+(comment "What is a trie?"
+
+         (let [words ["bet" "bets" "bat" "batch" "banana" "band"]]
+           (reduce trie-add {} words))
+
+         {\b
+          {\a
+           {\n {\d {:$ "band"},
+                \a {\n {\a {:$ "banana"}}}},
+            \t {:$ "bat",
+                \c {\h {:$ "batch"}}}},
+           \e {\t {:$ "bet",
+                   \s {:$ "bets"}}}}}
+
+         "What does pp/pprint (Clojure's pretty-printer) do with this?")
+
 (defn trie-seq
   "The sequence of all words in trie."
   [trie]
@@ -62,11 +78,10 @@
 (def ^{:doc "Two-word palindromes in words."}
   pairs
   (letfn [(tails [head] (trie-match trie (string/reverse head)))
-          (heads [tail] (map string/reverse (trie-match eirt tail)))]
-    (filter palindrome?
-            (mapcat (fn [w] (mapcat (fn [w h t] [[w h] [w t]])
-                                    (repeat w) (heads w) (tails w)))
-                    words))))
+          (heads [tail] (map string/reverse (trie-match eirt tail)))
+          (flips [word head tail] [[word head] [word tail]])
+          (grunt [w] (mapcat flips (repeat w) (heads w) (tails w)))]
+    (filter palindrome? (mapcat grunt words))))
 
 (comment "Now there are twins that are their own palindromes reversed,"
          "and there are also pairs which are all 2-word palindromes.")
@@ -74,8 +89,13 @@
 (defn golf-score-2-word-palindrome
   "Golf score 2-word palindromes on their letter coverage."
   [pal]
-  (let [ls (reduce str pal) lset (set ls) n (count ls)]
-    {:pal pal :letters lset :count n :score (/ n (count lset))}))
+  (let [ls (reduce str pal)
+        lset (set ls)
+        n (count ls)]
+    {:pal     pal
+     :letters lset
+     :count   n
+     :score   (/ n (count lset))}))
 
 (def ^{:doc "All 2-word palindromes sorted by golf score."}
   pair-scores
