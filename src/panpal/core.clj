@@ -24,7 +24,7 @@
 (def ^{:doc "Set of words whose palindromes are also in the dictionary."}
   twins
   (let [sdrow (map string/reverse words)]
-    (loop [twins (set/intersection (into #{} words) (into #{} sdrow))
+    (loop [twins (set/intersection (set words) (set sdrow))
            result #{}]
       (if (empty? twins) result
           (let [left (first twins)]
@@ -127,8 +127,8 @@
 
 (def ^{:doc "Set of letters that are not in twins."}
   not-in-twins
-  (set/difference (into #{} (mapcat seq words))
-                  (into #{} (mapcat seq twins))))
+  (set/difference (set (mapcat seq words))
+                  (set (mapcat seq twins))))
 
 (defn make-palindromic-pangrams
   "A vector of palindromic pangrams built by adding twins around pairs."
