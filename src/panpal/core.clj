@@ -46,17 +46,17 @@
 
 (comment "What is a trie?"
 
-         (let [words ["bet" "bets" "bat" "batch" "banana" "band"]]
+         (let [words ["bat" "bats" "bet" "batch" "banana" "band"]]
            (reduce trie-add {} words))
 
          {\b
-          {\a
+          {\e {\t {:$ "bet"}},
+           \a
            {\n {\d {:$ "band"},
                 \a {\n {\a {:$ "banana"}}}},
             \t {:$ "bat",
-                \c {\h {:$ "batch"}}}},
-           \e {\t {:$ "bet",
-                   \s {:$ "bets"}}}}}
+                \s {:$ "bats"},
+                \c {\h {:$ "batch"}}}}}}
 
          "What does pp/pprint (Clojure's pretty-printer) do with this?")
 
@@ -69,19 +69,28 @@
   "Sequence of words matching w in trie."
   (keep :$ (tree-seq map? vals (get-in trie w))))
 
-(def ^{:doc "The trie of all words in the dictionary."}
-  trie (reduce trie-add {} words))
-
 (def ^{:doc "The trie of all words in the dictionary reversed."}
   eirt (reduce trie-add {} (map string/reverse words)))
 
+(comment "What is eirt?"
+
+         (let [words ["bat" "bats" "bet" "batch" "banana" "band"]]
+           (reduce trie-add {} (map string/reverse words)))
+
+         {\d {\n {\a {\b {:$ "dnab"}}}},
+          \a {\n {\a {\n {\a {\b {:$ "ananab"}}}}}},
+          \h {\c {\t {\a {\b {:$ "hctab"}}}}},
+          \s {\t {\a {\b {:$ "stab"}}}},
+          \t {\e {\b {:$ "teb"}},
+              \a {\b {:$ "tab"}}}}
+
+         "Quickly find 'tab' and 'stab' as palindromic pairs of 'bat'.")
+
+
 (def ^{:doc "Two-word palindromes in words."}
   pairs
-  (letfn [(tails [head] (trie-match trie (string/reverse head)))
-          (heads [tail] (map string/reverse (trie-match eirt tail)))
-          (headr [word] (map vector (repeat word) (heads word)))
-          (tailr [word] (map vector (repeat word) (tails word)))
-          (flips [word] (lazy-cat (headr word) (tailr word)))
+  (letfn [(heads [tail] (map string/reverse (trie-match eirt tail)))
+          (flips [word] (map vector (repeat word) (heads word)))
           (twin? [[left right]] (= (count left) (count right)))]
     (filter palindrome?
             (filter (complement twin?) (mapcat flips words)))))
