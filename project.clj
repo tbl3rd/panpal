@@ -3,7 +3,9 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.6.0"]]
+  :dependencies [[org.clojure/clojure "1.6.0"]
+                 [org.clojure/core.logic "0.8.5"]
+                 [org.clojure/math.combinatorics "0.0.7"]]
   :main ^:skip-aot panpal.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
