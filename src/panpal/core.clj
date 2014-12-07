@@ -87,13 +87,13 @@
 (defn golf-score-2-word-palindrome
   "Golf score 2-word palindromes on their letter coverage."
   [pal]
-  (let [ls   (reduce str pal)
-        lset (set ls)
-        n    (count ls)]
+  (let [s (reduce str pal)
+        n (count s)
+        letters (set s)]
     {:pal     pal
-     :letters lset
+     :letters letters
      :count   n
-     :score   (/ n (count lset))}))
+     :score   (/ n (count letters))}))
 
 (def ^{:doc "All 2-word palindromes sorted by golf score."}
   pair-scores
