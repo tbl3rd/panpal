@@ -21,6 +21,10 @@
   (let [freqs (frequencies (mapcat seq words))]
     (reduce str (map first (sort-by second freqs)))))
 
+(def singles
+  ^{:doc "Single words that are themselves palindromes."}
+  (filter palindrome? words))
+
 (def ^{:doc "Set of words whose palindromes are also in the dictionary."}
   twins
   (let [sdrow (map string/reverse words)]
@@ -31,13 +35,6 @@
             (recur (disj twins left (string/reverse left))
                    (conj result left)))))))
 
-(comment
-  "Here you find that twins don't contain all the letters you need."
-  "You try to build more palindromes but problem is too big."
-
-  (def pairs (filter palindrome? (comb/combinations words 2)))
-
-  "A prefix tree (trie) or two might help.")
 
 (defn trie-add
   "Add prefixes of word w to trie with terminal {:$ w}."
@@ -76,16 +73,11 @@
 (def ^{:doc "Two-word palindromes in words."}
   pairs
   (letfn [(heads [tail] (trie-match trie (string/reverse tail)))
-          (flips [word] (map vector (heads word) (repeat word)))
-          (twin? [[left right]] (= (count left) (count right)))]
-    (filter palindrome?
-            (filter (complement twin?) (mapcat flips words)))))
+          (flips [word] (map vector (heads word) (repeat word)))]
+    (filter palindrome? (mapcat flips words))))
 
-(comment "Now there are twins that are their own palindromes reversed,"
-         "and there are also pairs which are all 2-word palindromes.")
-
-(defn golf-score-2-word-palindrome
-  "Golf score 2-word palindromes on their letter coverage."
+(defn golf-score-palindrome
+  "Golf score palindrome pal on its letter coverage."
   [pal]
   (let [s (reduce str pal)
         n (count s)
@@ -96,19 +88,19 @@
      :score   (/ n (count letters))}))
 
 (def ^{:doc "All 2-word palindromes sorted by golf score."}
-  pair-scores
-  (sort-by :score (map golf-score-2-word-palindrome pairs)))
+  scores
+  (sort-by :score
+           (map golf-score-palindrome
+                (lazy-cat (map vector singles) pairs))))
 
-(def ^{:doc "All twins sorted by golf score."}
-  twin-scores
-  (sort-by :score (map golf-score-2-word-palindrome twins)))
 
 (defn add-letter
   "A new palindrome around pal containing the letter c."
   [pal c]
   (letfn [(has-letter? [score] (contains? (:letters score) c))]
-    (let [word (:pal (first (filter has-letter? twin-scores)))]
-      (vec (cons word (conj pal (string/reverse word)))))))
+    (let [more (:pal (first (filter has-letter? scores)))]
+      (println :add-letter {:more more :pal pal :c c})
+      (apply vector (concat more pal more)))))
 
 (defn remove-any-of
   "Remove from s any letters in cs."
@@ -135,8 +127,9 @@
   []
   (letfn [(missing [letters] (set/intersection not-in-twins letters))
           (no-score? [score] (empty? (missing (:letters score))))]
-    (let [kernels (remove no-score? pair-scores)]
-      (loop [kernels (map :pal kernels) panpals []]
+    (let [all-kernels (remove no-score? scores)]
+      (loop [kernels (map :pal all-kernels) panpals []]
+        (println :make-palindromic-pangrams {:kernels kernels :panpals panpals})
         (if-let [k (first kernels)]
           (recur (rest kernels) (conj panpals (improve-kernel k)))
           panpals)))))
@@ -155,11 +148,11 @@
     (catch Throwable x
       (println "Oops:" x))))
 
-{:letters 85,
- :words 22,
- :panpal
- ["mac" "brag" "yah" "fled" "snivel" "tinker" "stow"
-  "spaz" "six" "jar" "suq" "us" "raj" "xis" "zaps"
-  "wots" "reknit" "levins" "delf" "hay" "garb" "cam"]}
-
 ;; (time (-main))
+
+{:letters 119,
+ :words 40,
+ :panpal
+ ["ere" "ana" "tat" "ala" "civic" "dad" "pap" "ama" "aga" "aba" "eye" "ava" "eke"
+  "awa" "fez" "ef" "oxo" "haj" "ah" "suq" "us" "haj" "ah" "oxo" "fez" "ef" "awa"
+  "eke" "ava" "eye" "aba" "aga" "ama" "pap" "dad" "civic" "ala" "tat" "ana" "ere"]}
