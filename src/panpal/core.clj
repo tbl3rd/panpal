@@ -55,34 +55,27 @@
             (and avid diva (== (count avid) (count diva))))
           (score [kernel]
             (let [s (reduce str kernel)
-                  x {:pal kernel
-                     :twin? (twin? kernel)
-                     :letters (set s)}
+                  sofar {:pal kernel
+                         :twin? (twin? kernel)
+                         :letters (set s)}
                   score (/ (count s)
-                           (count (:letters x))
-                           (if (:twin? x) 2 1))]
-              (assoc x :score score)))]
+                           (count (:letters sofar))
+                           (if (:twin? sofar) 2 1))]
+              (assoc sofar :score score)))]
     (let [singles (map vector (filter palindrome? words))
           pairs (find-2-word-palindromes words)]
       (sort-by :score (map score (lazy-cat singles pairs))))))
 
-(defn add-letter
-  "A palindrome around pal containing the letter c with scores."
-  [scores pal c]
-  (letfn [(has-letter? [score] (contains? (:letters score) c))]
-    (let [kernel (first (filter has-letter? scores))
-          more (:pal kernel)]
-      (vec (if (:twin? kernel)
-             (cons (first more) (conj pal (second more)))
-             (concat more pal more))))))
-
-(defn make-pangramit
-  "Use scores and lbf to make kernel palindrome pal pangrammatic."
-  [scores lbf]
-  (fn [pal]
-    (let [need (remove (set (string/join pal)) lbf)]
-      (if (empty? need) pal
-          (recur (add-letter scores pal (first need)))))))
+(defn make-add-letter
+  "Use scores to build a palindrome around pal adding the letter c."
+  [scores]
+  (fn [pal c]
+    (letfn [(has-letter? [score] (contains? (:letters score) c))]
+      (let [kernel (first (filter has-letter? scores))
+            more (:pal kernel)]
+        (vec (if (:twin? kernel)
+               (cons (first more) (conj pal (second more)))
+               (concat more pal more)))))))
 
 (defn letters-by-frequency
   "Least frequent to most in words: jqxzwkvfybhgmpudclotnraise"
@@ -91,11 +84,21 @@
                    (sort-by second
                             (frequencies (string/join words))))))
 
+(defn make-pangramit
+  "Use scores and words to make kernel palindrome pal pangrammatic."
+  [scores words]
+  (let [add-letter (make-add-letter scores)
+        lbf (letters-by-frequency words)]
+    (fn [pal]
+      (let [need (remove (set (string/join pal)) lbf)]
+        (if (empty? need) pal
+            (recur (add-letter pal (first need))))))))
+
 (defn make-palindromic-pangrams
   "A vector of palindromic pangrams built from words."
   [words]
   (let [scores (score-kernels words)
-        pangramit (make-pangramit scores (letters-by-frequency words))]
+        pangramit (make-pangramit scores words)]
     (loop [kernels (map :pal scores)
            panpals []]
       (if (empty? kernels) panpals
