@@ -9,7 +9,7 @@
 (defn palindrome?
   "True if sentence is a palindrome.  False otherwise."
   [sentence]
-  (let [letters (reduce str sentence)]
+  (let [letters (string/join sentence)]
     (= letters (string/reverse letters))))
 
 
@@ -21,7 +21,7 @@
   ^{:doc "Least frequent to most: jqxzwkvfybhgmpudclotnraise"}
   (reduce str (map first
                    (sort-by second
-                            (frequencies (mapcat seq words))))))
+                            (frequencies (string/join words))))))
 
 (def set-of-all-letters
   ^{:doc "The set of all letters in the alphabet."}
@@ -106,7 +106,7 @@
 (defn pangramit
   "Improve kernel palindrome pal until it is pangrammatic."
   [pal]
-  (let [need (remove (set (mapcat seq pal)) letters-by-frequency)]
+  (let [need (remove (set (string/join pal)) letters-by-frequency)]
     (if (empty? need) pal
         (recur (add-letter pal (first need))))))
 
@@ -122,10 +122,10 @@
 (defn score-panpal-with-fewest-letters
   "Score the palindromic pangram in panpals with the fewest letters."
   [panpals]
-  (let [count-letters (fn [pp] (count (mapcat seq pp)))
+  (let [count-letters (fn [pp] (count (string/join pp)))
         sorted (sort-by count-letters panpals)
         pp (first sorted)]
-    {:letters (count (mapcat seq pp))
+    {:letters (count (string/join pp))
      :words (count pp)
      :panpal pp}))
 
@@ -146,4 +146,4 @@
           "suq" "us" "raj" "tack" "cat" "jar" "suq" "us"
           "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]}
 
-;; "Elapsed time: 7322.628 msecs"
+;; "Elapsed time: 4520.261 msecs"
