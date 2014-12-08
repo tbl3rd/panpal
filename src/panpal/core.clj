@@ -35,6 +35,12 @@
             (recur (disj twins left (string/reverse left))
                    (conj result left)))))))
 
+(defn twin?
+  "True if pal is a twin palindrome.  False otherwise."
+  [pal]
+  (and (== 2 (count pal))
+       (let [[left right] pal]
+         (== (count left) (count right)))))
 
 (defn trie-add
   "Add prefixes of word w to trie with terminal {:$ w}."
@@ -80,12 +86,12 @@
   "Golf score palindrome pal on its letter coverage."
   [pal]
   (let [s (reduce str pal)
-        n (count s)
+        total (count s)
         letters (set s)]
     {:pal     pal
      :letters letters
-     :count   n
-     :score   (/ n (count letters))}))
+     :count   total
+     :score   (/ total (count letters) (if (twin? pal) 2 1))}))
 
 (def ^{:doc "All 2-word palindromes sorted by golf score."}
   scores
@@ -100,7 +106,9 @@
   (letfn [(has-letter? [score] (contains? (:letters score) c))]
     (let [more (:pal (first (filter has-letter? scores)))]
       (println :add-letter {:more more :pal pal :c c})
-      (apply vector (concat more pal more)))))
+      (if (twin? more)
+        (vec (cons (first more) (conj pal (second more))))
+        (concat more pal more)))))
 
 (defn remove-any-of
   "Remove from s any letters in cs."
@@ -113,6 +121,7 @@
   [kernel]
   (let [have (reduce str (set (mapcat seq kernel)))
         need (remove-any-of letters-by-frequency have)]
+    (println :improve-kernel {:kernel kernel :have have :need need})
     (if-let [c (first need)]
       (recur (add-letter kernel c))
       kernel)))
@@ -150,9 +159,9 @@
 
 ;; (time (-main))
 
-{:letters 119,
- :words 40,
+{:letters 93,
+ :words 28,
  :panpal
- ["ere" "ana" "tat" "ala" "civic" "dad" "pap" "ama" "aga" "aba" "eye" "ava" "eke"
-  "awa" "fez" "ef" "oxo" "haj" "ah" "suq" "us" "haj" "ah" "oxo" "fez" "ef" "awa"
-  "eke" "ava" "eye" "aba" "aga" "ama" "pap" "dad" "civic" "ala" "tat" "ana" "ere"]}
+ ["tuba" "mac" "ma" "regna" "ha" "ya" "fila" "diva" "skua" "swob"
+  "zaps" "xis" "raj" "suq" "us" "jar" "six" "spaz"
+  "bows" "auks" "avid" "alif" "ay" "ah" "anger" "am" "cam" "abut"]}
