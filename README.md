@@ -1,8 +1,7 @@
 # panpal
 
-FIXME: description
-
-## Installation
+Solve the "palindromic pangram problem"
+for Charlie Sawyer's Fall 2014 Java Jive.
 
 Download from https://github.com/tbl3rd/panpal.git
 
@@ -12,7 +11,6 @@ Download from https://github.com/tbl3rd/panpal.git
 
 ## License
 
-Copyright © 2014 FIXME
+Copyright © 2014 Tom Lyons and so on ...
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Distributed under the Eclipse Public License, the same as Clojure.
