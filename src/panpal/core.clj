@@ -91,9 +91,7 @@
 
 (def ^{:doc "All 2-word palindromes sorted by golf score."}
   scores
-  (sort-by :score
-           (map score-palindrome
-                (lazy-cat singles pairs))))
+  (sort-by :score (map score-palindrome (lazy-cat singles pairs))))
 
 
 (defn add-letter
@@ -105,7 +103,7 @@
              (cons (first more) (conj pal (second more)))
              (concat more pal more))))))
 
-(defn improve-palindrome
+(defn pangramit
   "Improve kernel palindrome pal until it is pangrammatic."
   [pal]
   (let [need (remove (set (mapcat seq pal)) letters-by-frequency)]
@@ -119,7 +117,7 @@
          panpals []]
     (if (empty? kernels) panpals
         (recur (rest kernels)
-               (conj panpals (improve-palindrome (first kernels)))))))
+               (conj panpals (pangramit (first kernels)))))))
 
 (defn score-panpal-with-fewest-letters
   "Score the palindromic pangram in panpals with the fewest letters."
@@ -138,6 +136,7 @@
      (score-panpal-with-fewest-letters (make-palindromic-pangrams)))
     (catch Throwable x
       (println "Oops:" x))))
+
 
 ;; (time (-main))
 
