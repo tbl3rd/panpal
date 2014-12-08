@@ -18,9 +18,10 @@
   (line-seq (io/reader (io/input-stream "WORD.LST"))))
 
 (def letters-by-frequency
-  ^{:doc "Letters from least frequent to most: jqxzwkvfybhgmpudclotnraise"}
-  (let [freqs (frequencies (mapcat seq words))]
-    (reduce str (map first (sort-by second freqs)))))
+  ^{:doc "Least frequent to most: jqxzwkvfybhgmpudclotnraise"}
+  (reduce str (map first
+                   (sort-by second
+                            (frequencies (mapcat seq words))))))
 
 (def set-of-all-letters
   ^{:doc "The set of all letters in the alphabet."}
@@ -32,7 +33,7 @@
 
 
 (defn twin?
-  "True if pal is a twin palindrome, such as [\"avid\" \"diva\"]."
+  "True if pal is a twin palindrome, such as 'avid diva'."
   [pal]
   (and (== 2 (count pal))
        (let [[left right] pal]
@@ -104,30 +105,21 @@
              (cons (first more) (conj pal (second more)))
              (concat more pal more))))))
 
-(defn remove-any-of
-  "Remove from s any letters in cs."
-  [s & cs]
-  (let [re (re-pattern (str "[" (reduce str cs) "]"))]
-    (clojure.string/replace s re "")))
-
 (defn improve-palindrome
   "Improve kernel palindrome pal until it is pangrammatic."
   [pal]
-  (let [have (reduce str (set (mapcat seq pal)))
-        need (remove-any-of letters-by-frequency have)]
-    (if-let [c (first need)]
-      (recur (add-letter pal c))
-      pal)))
+  (let [need (remove (set (mapcat seq pal)) letters-by-frequency)]
+    (if (empty? need) pal
+        (recur (add-letter pal (first need))))))
 
 (defn make-palindromic-pangrams
   "A vector of palindromic pangrams built center out to ends."
   []
   (loop [kernels (map :pal scores)
          panpals []]
-    (if-let [k (first kernels)]
-      (recur (rest kernels)
-             (conj panpals (improve-palindrome k)))
-      panpals)))
+    (if (empty? kernels) panpals
+        (recur (rest kernels)
+               (conj panpals (improve-palindrome (first kernels)))))))
 
 (defn score-panpal-with-fewest-letters
   "Score the palindromic pangram in panpals with the fewest letters."
@@ -155,4 +147,4 @@
           "suq" "us" "raj" "tack" "cat" "jar" "suq" "us"
           "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]}
 
-;; "Elapsed time: 8751.736 msecs"
+;; "Elapsed time: 7322.628 msecs"
