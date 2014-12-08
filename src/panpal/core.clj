@@ -21,22 +21,16 @@
   (let [freqs (frequencies (mapcat seq words))]
     (reduce str (map first (sort-by second freqs)))))
 
+(def set-of-all-letters
+  ^{:doc "The set of all letters in the alphabet."}
+  (set letters-by-frequency))
+
 (def singles
   ^{:doc "Single words that are themselves palindromes."}
   (filter palindrome? words))
 
-(def ^{:doc "Set of words whose palindromes are also in the dictionary."}
-  twins
-  (let [sdrow (map string/reverse words)]
-    (loop [twins (set/intersection (set words) (set sdrow))
-           result #{}]
-      (if (empty? twins) result
-          (let [left (first twins)]
-            (recur (disj twins left (string/reverse left))
-                   (conj result left)))))))
-
 (defn twin?
-  "True if pal is a twin palindrome.  False otherwise."
+  "True if pal is a twin palindrome such as [\"avid\" \"diva\"]."
   [pal]
   (and (== 2 (count pal))
        (let [[left right] pal]
@@ -106,9 +100,9 @@
   (letfn [(has-letter? [score] (contains? (:letters score) c))]
     (let [more (:pal (first (filter has-letter? scores)))]
       (println :add-letter {:more more :pal pal :c c})
-      (if (twin? more)
-        (vec (cons (first more) (conj pal (second more))))
-        (concat more pal more)))))
+      (vec (if (twin? more)
+             (cons (first more) (conj pal (second more)))
+             (concat more pal more))))))
 
 (defn remove-any-of
   "Remove from s any letters in cs."
@@ -126,22 +120,18 @@
       (recur (add-letter kernel c))
       kernel)))
 
-(def ^{:doc "Set of letters that are not in twins."}
-  not-in-twins
-  (set/difference (set (mapcat seq words))
-                  (set (mapcat seq twins))))
-
 (defn make-palindromic-pangrams
-  "A vector of palindromic pangrams built by adding twins around pairs."
+  "A vector of palindromic pangrams built center out to ends."
   []
-  (letfn [(missing [letters] (set/intersection not-in-twins letters))
-          (no-score? [score] (empty? (missing (:letters score))))]
-    (let [all-kernels (remove no-score? scores)]
-      (loop [kernels (map :pal all-kernels) panpals []]
-        (println :make-palindromic-pangrams {:kernels kernels :panpals panpals})
-        (if-let [k (first kernels)]
-          (recur (rest kernels) (conj panpals (improve-kernel k)))
-          panpals)))))
+  (loop [kernels (map :pal scores) panpals []]
+    ;; (println :make-palindromic-pangrams {:kernels kernels :panpals panpals})
+    (if-let [k (first kernels)]
+      (let [improved (improve-kernel k)]
+        (if (not (palindrome? improved))
+          (do (println :make-palindromic-pangrams {:improved improved})
+              (throw (Exception. "OH NO!"))))
+        (recur (rest kernels) (conj panpals improved)))
+      panpals)))
 
 (defn score-panpal-with-fewest-letters
   "Score the palindromic pangram in panpals with the fewest letters."
@@ -159,9 +149,10 @@
 
 ;; (time (-main))
 
-{:letters 93,
- :words 28,
- :panpal
- ["tuba" "mac" "ma" "regna" "ha" "ya" "fila" "diva" "skua" "swob"
-  "zaps" "xis" "raj" "suq" "us" "jar" "six" "spaz"
-  "bows" "auks" "avid" "alif" "ay" "ah" "anger" "am" "cam" "abut"]}
+{:letters 83,
+ :words 26,
+ :panpal ["ma" "regna" "ha" "ya" "fila" "diva" "swob" "zaps" "xis"
+          "suq" "us" "raj" "tack" "cat" "jar" "suq" "us"
+          "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]}
+
+;; "Elapsed time: 1326206.181 msecs"
