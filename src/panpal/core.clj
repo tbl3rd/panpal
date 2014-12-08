@@ -4,10 +4,8 @@
             [clojure.string  :as string])
   (:gen-class))
 
-
 ;; A 'word' is a string of lowercase letters: "word"
 ;; A 'sentence' is a vector of words: ["a" "vector" "of" "words"]
-
 
 (defn palindrome?
   "True if sentence is a palindrome.  False otherwise."
@@ -50,29 +48,23 @@
       (filter palindrome? (mapcat flips words)))))
 
 
-(defn twin?
-  "True if pal is a twin palindrome, such as 'avid diva'."
-  [pal]
-  (let [[avid diva] pal]
-    (and avid diva (== (count avid) (count diva)))))
-
-(defn score-a-kernel
-  "Golf score the palindrome kernel on its letter coverage."
-  [kernel]
-  (let [twin (twin? kernel)
-        s (reduce str kernel)
-        letters (set s)]
-    {:pal     kernel
-     :twin?   twin
-     :letters letters
-     :score   (/ (count s) (count letters) (if twin 2 1))}))
-
 (defn score-kernels
   "All 1- and 2-word palindromes sorted by their kernel scores."
   [words]
-  (let [singles (map vector (filter palindrome? words))
-        pairs (find-2-word-palindromes words)]
-    (sort-by :score (map score-a-kernel (lazy-cat singles pairs)))))
+  (letfn [(twin? [[avid diva]]
+            (and avid diva (== (count avid) (count diva))))
+          (score [kernel]
+            (let [s (reduce str kernel)
+                  x {:pal kernel
+                     :twin? (twin? kernel)
+                     :letters (set s)}
+                  score (/ (count s)
+                           (count (:letters x))
+                           (if (:twin? x) 2 1))]
+              (assoc x :score score)))]
+    (let [singles (map vector (filter palindrome? words))
+          pairs (find-2-word-palindromes words)]
+      (sort-by :score (map score (lazy-cat singles pairs))))))
 
 (defn add-letter
   "A palindrome around pal containing the letter c with scores."
