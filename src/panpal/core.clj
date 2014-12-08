@@ -1,9 +1,12 @@
 (ns panpal.core
   (:require [clojure.java.io :as io]
-            [clojure.pprint :as pp]
-            [clojure.set :as set]
-            [clojure.string :as string])
+            [clojure.pprint  :as pprint]
+            [clojure.string  :as string])
   (:gen-class))
+
+
+;; A 'word' is a string of lowercase letters: "word"
+;; A 'sentence' is a vector of words: ["a" "vector" "of" "words"]
 
 
 (defn palindrome?
@@ -23,10 +26,6 @@
                    (sort-by second
                             (frequencies (string/join words))))))
 
-(def set-of-all-letters
-  ^{:doc "The set of all letters in the alphabet."}
-  (set letters-by-frequency))
-
 (def singles
   ^{:doc "Single word palindromes."}
   (map vector (filter palindrome? words)))
@@ -35,9 +34,8 @@
 (defn twin?
   "True if pal is a twin palindrome, such as 'avid diva'."
   [pal]
-  (and (== 2 (count pal))
-       (let [[left right] pal]
-         (== (count left) (count right)))))
+  (let [[avid diva] pal]
+    (and avid diva (== (count avid) (count diva)))))
 
 
 (defn trie-add
@@ -122,28 +120,31 @@
 (defn score-panpal-with-fewest-letters
   "Score the palindromic pangram in panpals with the fewest letters."
   [panpals]
-  (let [count-letters (fn [pp] (count (string/join pp)))
-        sorted (sort-by count-letters panpals)
-        pp (first sorted)]
-    {:letters (count (string/join pp))
-     :words (count pp)
-     :panpal pp}))
+  (letfn [(score [pp] {:letters (count (string/join pp))
+                       :words (count pp)
+                       :panpal pp})]
+    (let [count-letters (fn [pp] (count (string/join pp)))
+          sorted (sort-by count-letters panpals)
+          n (:letters (score (first sorted)))]
+      (map score (take-while #(== n (:letters (score %))) sorted)))))
 
 (defn -main
   [& args]
   (try
-    (pp/pprint
+    (pprint/pprint
      (score-panpal-with-fewest-letters (make-palindromic-pangrams)))
     (catch Throwable x
       (println "Oops:" x))))
 
-
-;; (time (-main))
-
-{:letters 83,
- :words 26,
- :panpal ["ma" "regna" "ha" "ya" "fila" "diva" "swob" "zaps" "xis"
-          "suq" "us" "raj" "tack" "cat" "jar" "suq" "us"
-          "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]}
-
-;; "Elapsed time: 4520.261 msecs"
+;; (time (-main)) --==>> "Elapsed time: 4491.989 msecs"
+;;
+[{:letters 83,
+  :words 26,
+  :panpal ["ma" "regna" "ha" "ya" "fila" "diva" "swob" "zaps" "xis"
+           "suq" "us" "raj" "tack" "cat" "jar" "suq" "us"
+           "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]}
+ {:letters 83,
+  :words 26,
+  :panpal ["ma" "regna" "ha" "ya" "fila" "diva" "swob" "zaps" "xis"
+           "suq" "us" "raj" "tuck" "cut" "jar" "suq" "us"
+           "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]}]
