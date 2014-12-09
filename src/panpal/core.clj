@@ -1,49 +1,50 @@
 (ns panpal.core
-  (:require [clojure.java.io :as io]
-            [clojure.pprint  :as pprint]
-            [clojure.string  :as string])
-  (:gen-class))
+  (:import [java.io BufferedReader FileReader])
+  (:require [clojure.pprint :as p]
+            [clojure.string :as s]))
 
-
-;; A 'word' is a string of lowercase letters: "word"
+;; A 'word' is a string of lower-case letters: "word"
 ;; A 'sentence' is a vector of words: ["a" "vector" "of" "words"]
 
+;; A 'palindrome' is a 'sentence' whose letters are the same read
+;; forward and backward.  (def ted ...) defines 'ted' to be '...'.
+;;
+(def ted ["a" "man" "a" "plan" "a" "canal" "panama"])
 
-(defn palindrome?
-  "True if sentence is a palindrome.  False otherwise."
-  [sentence]
-  (let [letters (string/join sentence)]
-    (= letters (string/reverse letters))))
+;; A 'pangram' is a 'sentence' which contains all letters.
+;;
+(def fox ["quick" "brown" "fox" "jumps" "over" "the" "lazy" "dog"])
 
+;; A 'palindromic pangram' or 'pangrammatic palindrome' ('panpal')
+;; is a sentence that is both a pangram and a palindrome.
 
-(def ^{:doc "All the words in the WORD.LST dictionary."}
+;; Use words from a WORD.LST file to make pangrammatic palindromes.
+;; The panpals don't have to make sense, but look for short ones.
+
+(def ^{:doc "A lazy sequence of lines from the WORD.LST file."}
   words
-  (line-seq (io/reader (io/input-stream "WORD.LST"))))
+  (line-seq (new java.io.BufferedReader
+                 (new java.io.FileReader "WORD.LST"))))
 
-(def letters-by-frequency
-  ^{:doc "Least frequent to most: jqxzwkvfybhgmpudclotnraise"}
-  (reduce str (map first
-                   (sort-by second
-                            (frequencies (string/join words))))))
+(def ^{:doc "Letters in words from least frequent to most."}
+  letters-by-frequency
+  (apply str (map first
+                  (sort-by second
+                           (frequencies (s/join words))))))
 
-(def singles
-  ^{:doc "Single word palindromes."}
-  (map vector (filter palindrome? words)))
-
-
-(defn twin?
-  "True if pal is a twin palindrome, such as 'avid diva'."
-  [pal]
-  (let [[avid diva] pal]
-    (and avid diva (== (count avid) (count diva)))))
+(def ^{:doc "True if sentence is a palindrome.  False otherwise."}
+  palindrome?
+  (fn [sentence]
+    (let [letters (s/join sentence)]
+      (= letters (s/reverse letters)))))
 
 
 (defn trie-add
-  "Add prefixes of word w to trie with terminal {:$ w}."
-  [trie w]
-  (assoc-in trie w (merge (get-in trie w) {:$ w})))
+  "Add prefixes from word to trie with terminal {:$ word}."
+  [trie word]
+  (assoc-in trie word (merge (get-in trie word) {:$ word})))
 
-(comment "What is a trie?"
+(comment "Use a trie to find all 2-word palindromes: 'truce curt'."
 
          (let [words ["bat" "bats" "bet" "batch" "banana" "band"]]
            (reduce trie-add {} words))
@@ -59,56 +60,56 @@
 
          "Quickly find 'bats' to pair with 'tab'.")
 
-(defn trie-seq
-  "The sequence of all words in trie."
-  [trie]
-  (keep :$ (tree-seq map? vals trie)))
+(defn trie-match [trie word]
+  "Sequence of words matching word in trie."
+  (keep :$ (tree-seq map? vals (get-in trie word))))
 
-(defn trie-match [trie w]
-  "Sequence of words matching w in trie."
-  (keep :$ (tree-seq map? vals (get-in trie w))))
-
-(def ^{:doc "Two-word palindromes in words."}
+(def ^{:doc "All 2-word palindromes in words."}
   pairs
   (let [trie (reduce trie-add {} words)]
-    (letfn [(heads [tail] (trie-match trie (string/reverse tail)))
+    (letfn [(heads [tail] (trie-match trie (s/reverse tail)))
             (flips [word] (map vector (heads word) (repeat word)))]
       (filter palindrome? (mapcat flips words)))))
 
 
-(defn score-palindrome
+(defn twin?
+  "True if pal is a twin palindrome, such as 'avid diva'."
+  [pal]
+  (let [[avid diva] pal]
+    (and avid diva (== (count avid) (count diva)))))
+
+(defn score-pal
   "Golf score the palindrome pal on its letter coverage."
   [pal]
   (let [s (reduce str pal)
-        total (count s)
-        letters (set s)]
-    {:pal     pal
-     :letters letters
-     :count   total
-     :score   (/ total (count letters) (if (twin? pal) 2 1))}))
+        m {:pal pal :twin? (twin? pal) :letters (set s)}
+        score (/ (count s) (count (:letters m)) (if (:twin? m) 2 1))]
+    (assoc m :score score)))
 
-(def ^{:doc "All 2-word palindromes sorted by golf score."}
+(def ^{:doc "All 1- and 2-word palindromes sorted by golf score."}
   scores
-  (sort-by :score (map score-palindrome (lazy-cat singles pairs))))
+  (let [singles (map vector (filter palindrome? words))]
+    (sort-by :score (map score-pal (lazy-cat pairs singles)))))
 
 
 (defn add-letter
   "A new palindrome around pal containing the letter c."
   [pal c]
   (letfn [(has-letter? [score] (contains? (:letters score) c))]
-    (let [more (:pal (first (filter has-letter? scores)))]
-      (vec (if (twin? more)
-             (cons (first more) (conj pal (second more)))
-             (concat more pal more))))))
+    (let [s (first (filter has-letter? scores))
+          p (:pal s)]
+      (vec (if (:twin? s)
+             (cons (first p) (conj pal (second p)))
+             (concat p pal p))))))
 
 (defn pangramit
-  "Improve kernel palindrome pal until it is pangrammatic."
+  "Wrap kernel palindrome pal until it is pangrammatic."
   [pal]
-  (let [need (remove (set (string/join pal)) letters-by-frequency)]
+  (let [need (remove (set (s/join pal)) letters-by-frequency)]
     (if (empty? need) pal
         (recur (add-letter pal (first need))))))
 
-(defn make-palindromic-pangrams
+(defn make-panpals
   "A vector of palindromic pangrams built center out to ends."
   []
   (loop [kernels (map :pal scores)
@@ -117,34 +118,28 @@
         (recur (rest kernels)
                (conj panpals (pangramit (first kernels)))))))
 
-(defn score-panpal-with-fewest-letters
+(defn score-fewest-letters
   "Score the palindromic pangram in panpals with the fewest letters."
   [panpals]
-  (letfn [(score [pp] {:letters (count (string/join pp))
+  (letfn [(score [pp] {:letters (count (s/join pp))
                        :words (count pp)
                        :panpal pp})]
-    (let [count-letters (fn [pp] (count (string/join pp)))
+    (let [count-letters (fn [pp] (count (s/join pp)))
           sorted (sort-by count-letters panpals)
           n (:letters (score (first sorted)))]
       (map score (take-while #(== n (:letters (score %))) sorted)))))
 
 (defn -main
   [& args]
-  (try
-    (pprint/pprint
-     (score-panpal-with-fewest-letters (make-palindromic-pangrams)))
-    (catch Throwable x
-      (println "Oops:" x))))
+  (try (p/pprint (score-fewest-letters (time (make-panpals))))
+       (catch Throwable x (println "Oops:" x))))
 
-;; (time (-main)) --==>> "Elapsed time: 4491.989 msecs"
-;;
-[{:letters 83,
-  :words 26,
+["Elapsed time: 2983.316 msecs"
+ {:letters 83,:words 26,
   :panpal ["ma" "regna" "ha" "ya" "fila" "diva" "swob" "zaps" "xis"
            "suq" "us" "raj" "tack" "cat" "jar" "suq" "us"
            "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]}
- {:letters 83,
-  :words 26,
+ {:letters 83,:words 26,
   :panpal ["ma" "regna" "ha" "ya" "fila" "diva" "swob" "zaps" "xis"
            "suq" "us" "raj" "tuck" "cut" "jar" "suq" "us"
            "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]}]
