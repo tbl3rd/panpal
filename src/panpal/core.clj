@@ -21,19 +21,19 @@
 ;; Use words from a WORD.LST file to make pangrammatic palindromes.
 ;; The panpals don't have to make sense, but look for short ones.
 
-(def ^{:doc "A lazy sequence of lines from the WORD.LST file."}
-  words
+(def words
+  "A lazy sequence of lines from the WORD.LST file."
   (line-seq (new java.io.BufferedReader
                  (new java.io.FileReader "WORD.LST"))))
 
-(def ^{:doc "Letters in words from least frequent to most."}
-  letters-by-frequency
+(def letters-by-frequency
+  "Letters in words from least frequent to most."
   (apply str (map first
                   (sort-by second
                            (frequencies (s/join words))))))
 
-(def ^{:doc "True if sentence is a palindrome.  False otherwise."}
-  palindrome?
+(def palindrome?
+  "True if sentence is a palindrome.  False otherwise."
   (fn [sentence]
     (let [letters (s/join sentence)]
       (= letters (s/reverse letters)))))
@@ -64,8 +64,8 @@
   "Sequence of words matching word in trie."
   (keep :$ (tree-seq map? vals (get-in trie word))))
 
-(def ^{:doc "All 2-word palindromes in words."}
-  pairs
+(def pairs
+  "All 2-word palindromes in words."
   (let [trie (reduce trie-add {} words)]
     (letfn [(heads [tail] (trie-match trie (s/reverse tail)))
             (flips [word] (map vector (heads word) (repeat word)))]
@@ -86,8 +86,8 @@
         score (/ (count s) (count (:letters m)) (if (:twin? m) 2 1))]
     (assoc m :score score)))
 
-(def ^{:doc "All 1- and 2-word palindromes sorted by golf score."}
-  scores
+(def scores
+  "All 1- and 2-word palindromes sorted by golf score."
   (let [singles (map vector (filter palindrome? words))]
     (sort-by :score (map score-pal (lazy-cat pairs singles)))))
 
