@@ -1,7 +1,8 @@
 (ns panpal.core
   (:import [java.io BufferedReader FileReader])
   (:require [clojure.pprint :as p]
-            [clojure.string :as s]))
+            [clojure.string :as s])
+  (:gen-class))
 
 ;; A 'word' is a string of lower-case letters: "word"
 ;; A 'sentence' is a vector of words: ["a" "vector" "of" "words"]

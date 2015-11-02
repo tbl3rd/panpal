@@ -25,7 +25,7 @@ Download from https://github.com/tbl3rd/panpal.git
        "suq" "us" "raj" "tuck" "cut" "jar" "suq" "us"
        "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]})
     $
-    
+
 ## License
 
 Copyright © 2014 Tom Lyons and so on ...
