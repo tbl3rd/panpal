@@ -132,12 +132,11 @@
   (try (p/pprint (score-fewest-letters (make-panpals)))
        (catch Throwable x (println "Oops:" x))))
 
-["Elapsed time: 2983.316 msecs"
- {:letters 83,:words 26,
+({:letters 83,:words 26,
   :panpal ["ma" "regna" "ha" "ya" "fila" "diva" "swob" "zaps" "xis"
            "suq" "us" "raj" "tack" "cat" "jar" "suq" "us"
            "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]}
  {:letters 83,:words 26,
   :panpal ["ma" "regna" "ha" "ya" "fila" "diva" "swob" "zaps" "xis"
            "suq" "us" "raj" "tuck" "cut" "jar" "suq" "us"
-           "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]}]
+           "six" "spaz" "bows" "avid" "alif" "ay" "ah" "anger" "am"]})
