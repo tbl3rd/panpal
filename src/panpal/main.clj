@@ -1,4 +1,4 @@
-(ns panpal.core
+(ns panpal.main
   (:import [java.io BufferedReader FileReader])
   (:require [clojure.pprint :as p]
             [clojure.string :as s])
@@ -129,7 +129,7 @@
 
 (defn -main
   [& args]
-  (try (p/pprint (score-fewest-letters (time (make-panpals))))
+  (try (p/pprint (score-fewest-letters (make-panpals)))
        (catch Throwable x (println "Oops:" x))))
 
 ["Elapsed time: 2983.316 msecs"

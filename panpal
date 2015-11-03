@@ -7,16 +7,16 @@
  :target-path "target"
  :dependencies '[[org.clojure/clojure "1.7.0"]])
 
-(require '[panpal.core])
+(require '[panpal.main])
 
 (deftask build
   "Build this."
   []
   (comp
-   (aot :namespace '#{panpal.core})
+   (aot :namespace '#{panpal.main})
    (pom :project 'panpal :version "0.1.0")
    (uber)
-   (jar :main 'panpal.core
+   (jar :main 'panpal.main
         :manifest
         {"Description" "Solve the palindromic pangram problem"
          "Url" "https://github.com/tbl3rd/panpal.git"})))
@@ -25,10 +25,10 @@
   "Run this program."
   []
   (with-pre-wrap fileset
-    (panpal.core/-main)
+    (panpal.main/-main)
     fileset))
 
 (defn -main
   "Run this program as a script."
   [& args]
-  (apply panpal.core/-main args))
+  (apply panpal.main/-main args))
