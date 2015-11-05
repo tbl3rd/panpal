@@ -4,11 +4,11 @@
             [clojure.string :as s])
   (:gen-class))
 
-;; A 'word' is a string of lower-case letters: "word"
-;; A 'sentence' is a vector of words: ["a" "vector" "of" "words"]
+;; A "word" is a (Java) string of lower-case letters.
+;; A 'sentence' is ["a" "vector" "of" "words"].
 
 ;; A 'palindrome' is a 'sentence' whose letters are the same read
-;; forward and backward.  (def ted ...) defines 'ted' to be '...'.
+;; forward and backward.  (def ted ...) defines TED to be '...'.
 ;;
 (def ted ["a" "man" "a" "plan" "a" "canal" "panama"])
 
@@ -34,17 +34,17 @@
                            (frequencies (s/join words))))))
 
 (def palindrome?
-  "True if sentence is a palindrome.  False otherwise."
+  "True if SENTENCE is a palindrome.  False otherwise."
   (fn [sentence]
     (let [letters (s/join sentence)]
       (= letters (s/reverse letters)))))
 
 (defn trie-add
-  "Add prefixes from word to trie with terminal {:$ word}."
+  "Add prefixes from WORD to TRIE with terminal {:$ WORD}."
   [trie word]
   (assoc-in trie word (merge (get-in trie word) {:$ word})))
 
-(comment "Use a trie to find all 2-word palindromes: 'truce curt'."
+(comment "Use a trie to find all pair palindromes:" ["truce" "curt"]
 
          (let [words ["bat" "bats" "bet" "batch" "banana" "band"]]
            (reduce trie-add {} words))
@@ -61,24 +61,24 @@
          "Quickly find 'bats' to pair with 'tab'.")
 
 (defn trie-match [trie word]
-  "Sequence of words matching word in trie."
+  "Sequence of words matching WORD in TRIE."
   (keep :$ (tree-seq map? vals (get-in trie word))))
 
 (def pairs
-  "All 2-word palindromes in words."
+  "All 2-word palindromes in WORDS."
   (let [trie (reduce trie-add {} words)]
     (letfn [(heads [tail] (trie-match trie (s/reverse tail)))
             (flips [word] (map vector (heads word) (repeat word)))]
       (filter palindrome? (mapcat flips words)))))
 
 (defn twin?
-  "True if pal is a twin palindrome, such as 'avid diva'."
+  "True if PAL is a twin palindrome, such as 'avid diva'."
   [pal]
   (let [[avid diva] pal]
     (and avid diva (== (count avid) (count diva)))))
 
 (defn score-pal
-  "Golf score the palindrome pal on its letter coverage."
+  "Golf score the palindrome PAL on its letter coverage."
   [pal]
   (let [s (reduce str pal)
         m {:pal pal :twin? (twin? pal) :letters (set s)}
@@ -91,7 +91,7 @@
     (sort-by :score (map score-pal (lazy-cat pairs singles)))))
 
 (defn add-letter
-  "A new palindrome around pal containing the letter c."
+  "A new palindrome around PAL containing the letter C."
   [pal c]
   (letfn [(has-letter? [score] (contains? (:letters score) c))]
     (let [s (first (filter has-letter? scores))
@@ -101,7 +101,7 @@
              (concat p pal p))))))
 
 (defn pangramit
-  "Wrap kernel palindrome pal until it is pangrammatic."
+  "Wrap kernel palindrome PAL until it is pangrammatic."
   [pal]
   (let [need (remove (set (s/join pal)) letters-by-frequency)]
     (if (empty? need) pal
@@ -117,7 +117,7 @@
                (conj panpals (pangramit (first kernels)))))))
 
 (defn score-fewest-letters
-  "Score the palindromic pangram in panpals with the fewest letters."
+  "Score the palindromic pangram in PANPALS with the fewest letters."
   [panpals]
   (letfn [(score [pp] {:letters (count (s/join pp))
                        :words (count pp)
@@ -128,6 +128,7 @@
       (map score (take-while #(== n (:letters (score %))) sorted)))))
 
 (defn -main
+  "Pretty print the shortest palindromic pangrams or throw."
   [& args]
   (try (p/pprint (score-fewest-letters (make-panpals)))
        (catch Throwable x (println "Oops:" x))))
