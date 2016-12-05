@@ -5,7 +5,7 @@
 (set-env!
  :resource-paths #{"src"}
  :target-path "target"
- :dependencies '[[org.clojure/clojure "1.7.0"]])
+ :dependencies '[[org.clojure/clojure "1.8.0"]])
 
 (require '[panpal.main])
 
