@@ -125,7 +125,7 @@
     (let [count-letters (fn [pp] (count (s/join pp)))
           sorted (sort-by count-letters panpals)
           n (:letters (score (first sorted)))]
-      (map score (take-while #(== n (:letters (score %))) sorted)))))
+      (map score (take-while (fn [pp] (== n (:letters (score pp)))) sorted)))))
 
 (defn -main
   "Pretty print the shortest palindromic pangrams or throw."
