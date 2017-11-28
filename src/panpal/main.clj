@@ -28,7 +28,7 @@
                  (new java.io.FileReader "WORD.LST"))))
 
 (def letters-by-frequency
-  "Letters in words from least frequent to most."
+  "Letters in WORDS from least frequent to most."
   (apply str (map first
                   (sort-by second
                            (frequencies (s/join words))))))
